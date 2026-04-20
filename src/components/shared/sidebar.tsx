@@ -86,8 +86,8 @@ export default function Sidebar() {
 
   const ROLE_ROUTES: Record<string, string[]> = {
     super_admin: ["/admin/dashboard", "/admin/services", "/admin/projects", "/admin/testimonials", "/admin/contact-queries", "/admin/roles-management", "/admin/notifications", "/admin/chatbot"],
-    content_creator: ["/admin/dashboard", "/admin/services", "/admin/projects", "/admin/testimonials", "/admin/notifications", "/admin/chatbot"],
-    support_staff: ["/admin/dashboard", "/admin/contact-queries", "/admin/notifications", "/admin/chatbot"]
+    content_creator: ["/admin/services", "/admin/projects", "/admin/testimonials", "/admin/notifications", "/admin/chatbot"],
+    support_staff: ["/admin/contact-queries", "/admin/notifications", "/admin/chatbot"]
   };
 
   const FilteredNavItems = useMemo(() => {
@@ -106,7 +106,7 @@ export default function Sidebar() {
             M.<span className="text-violet-500">Ahmad</span>
           </Link>
         )}
-        <button onClick={() => setCollapsed(!collapsed)} className="text-gray-500 dark:text-gray-400 hover:text-violet-400 transition-colors ml-auto">
+        <button aria-label="sidebar handler" onClick={() => setCollapsed(!collapsed)} className="text-gray-500 dark:text-gray-400 hover:text-violet-400 transition-colors ml-auto">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={collapsed ? "M13 5l7 7-7 7M5 5l7 7-7 7" : "M11 19l-7-7 7-7m8 14l-7-7 7-7"} />
           </svg>

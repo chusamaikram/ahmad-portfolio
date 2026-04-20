@@ -9,11 +9,11 @@ import { useUserStore } from "@/src/store/useUserStore";
 
 const GRADIENT_OPTIONS = [
   { label: "Violet → Purple", value: "violet_purple", css: "linear-gradient(135deg, #7c3aed, #4f46e5)" },
-  { label: "Blue → Indigo",   value: "blue_indigo",   css: "linear-gradient(135deg, #3b82f6, #6366f1)" },
-  { label: "Pink → Rose",     value: "pink_rose",     css: "linear-gradient(135deg, #ec4899, #f43f5e)" },
-  { label: "Emerald → Teal",  value: "emerald_teal",  css: "linear-gradient(135deg, #10b981, #14b8a6)" },
-  { label: "Amber → Orange",  value: "amber_orange",  css: "linear-gradient(135deg, #f59e0b, #f97316)" },
-  { label: "Cyan → Sky",      value: "cyan_sky",      css: "linear-gradient(135deg, #06b6d4, #0ea5e9)" },
+  { label: "Blue → Indigo", value: "blue_indigo", css: "linear-gradient(135deg, #3b82f6, #6366f1)" },
+  { label: "Pink → Rose", value: "pink_rose", css: "linear-gradient(135deg, #ec4899, #f43f5e)" },
+  { label: "Emerald → Teal", value: "emerald_teal", css: "linear-gradient(135deg, #10b981, #14b8a6)" },
+  { label: "Amber → Orange", value: "amber_orange", css: "linear-gradient(135deg, #f59e0b, #f97316)" },
+  { label: "Cyan → Sky", value: "cyan_sky", css: "linear-gradient(135deg, #06b6d4, #0ea5e9)" },
 ];
 
 function getGradientCss(value: string) {
@@ -56,6 +56,7 @@ function ServiceFormModal({ defaultValues, onSave, onCancel, submitLabel }: {
         <Controller control={control} name="color_gradient" rules={rules.color_gradient}
           render={({ field }) => (
             <select
+            aria-label="gradient selector"
               value={field.value}
               onChange={(e) => field.onChange(e.target.value)}
               className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:border-violet-500 focus:ring-violet-500/30 transition-all"
@@ -71,7 +72,7 @@ function ServiceFormModal({ defaultValues, onSave, onCancel, submitLabel }: {
       <Controller control={control} name="visible"
         render={({ field }) => (
           <div className="flex items-center gap-3">
-            <button type="button" onClick={() => field.onChange(!field.value)}
+            <button aria-label="visible toggle" type="button" onClick={() => field.onChange(!field.value)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${field.value ? "bg-violet-600" : "bg-gray-600"}`}>
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${field.value ? "translate-x-6" : "translate-x-1"}`} />
             </button>
@@ -175,55 +176,58 @@ export default function AdminServicesView() {
                 const features = Array.isArray(s.features) ? s.features : String(s.features ?? "").split(",").map(f => f.trim()).filter(Boolean);
                 return (
                   <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-xl flex-shrink-0"
-                        style={{ background: getGradientCss(s.color_gradient) }}
-                      />
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">{s.title}</p>
-                        <p className="text-xs text-gray-500 mt-0.5 truncate max-w-xs">{s.description}</p>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-10 h-10 rounded-xl flex-shrink-0"
+                          style={{ background: getGradientCss(s.color_gradient) }}
+                        />
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">{s.title}</p>
+                          <p className="text-xs text-gray-500 mt-0.5 truncate max-w-xs">{s.description}</p>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {features.slice(0, 2).map((f) => (
-                        <span key={f} className="text-xs bg-violet-950/60 text-violet-300 px-2 py-0.5 rounded border border-violet-800/50">{f}</span>
-                      ))}
-                      {features.length > 2 && (
-                        <span className="text-xs text-gray-400 dark:text-gray-500">+{features.length - 2}</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="w-16 h-5 rounded-full" style={{ background: getGradientCss(s.color_gradient) }} />
-                  </td>
-                  <td className="px-5 py-4">
-                    <button
-                      onClick={() => handleToggleVisible(s.id, s.visible)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${s.visible ? "bg-violet-600" : "bg-gray-600"}`}
-                    >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${s.visible ? "translate-x-6" : "translate-x-1"}`} />
-                    </button>
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => openEdit(s)} title="Edit"
-                        className="p-1.5 text-gray-400 hover:text-violet-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {features.slice(0, 2).map((f) => (
+                          <span key={f} className="text-xs bg-violet-950/60 text-violet-300 px-2 py-0.5 rounded border border-violet-800/50">{f}</span>
+                        ))}
+                        {features.length > 2 && (
+                          <span className="text-xs text-gray-400 dark:text-gray-500">+{features.length - 2}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="w-16 h-5 rounded-full" style={{ background: getGradientCss(s.color_gradient) }} />
+                    </td>
+                    <td className="px-5 py-4">
+                      <button
+                      aria-label="visible toggler"
+                        onClick={() => handleToggleVisible(s.id, s.visible)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${s.visible ? "bg-violet-600" : "bg-gray-600"}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${s.visible ? "translate-x-6" : "translate-x-1"}`} />
                       </button>
-                      <button onClick={() => openDelete(s)} title="Delete"
-                        className={`${user?.role !== "super_admin" ? "hidden" : "block"} p-1.5 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors`}>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => openEdit(s)} title="Edit"
+                          className="p-1.5 text-gray-400 hover:text-violet-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        { user?.role === "super_admin" &&
+                          <button onClick={() => openDelete(s)} title="Delete"
+                            className={` p-1.5 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors`}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        }
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
@@ -245,7 +249,7 @@ export default function AdminServicesView() {
                   <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                     {modal === "add" ? "Add Service" : "Edit Service"}
                   </h2>
-                  <button onClick={() => setModal(null)} className="text-gray-400 hover:text-gray-700 dark:hover:text-white">
+                  <button aria-label="model controler" onClick={() => setModal(null)} className="text-gray-400 hover:text-gray-700 dark:hover:text-white">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>

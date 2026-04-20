@@ -3,8 +3,8 @@ import type { NextRequest } from 'next/server'
 
 const ROLE_BASED_ROUTES: Record<string, string[]> = {
   super_admin: ["/admin/dashboard", "/admin/projects", "/admin/services", "/admin/testimonials", "/admin/contact-queries", "/admin/roles-management", "/admin/notifications", "/admin/chatbot"],
-  content_creator: ["/admin/dashboard", "/admin/projects", "/admin/testimonials", "/admin/services", "/admin/notifications", "/admin/chatbot"],
-  support_staff: ["/admin/dashboard", "/admin/contact-queries", "/admin/notifications", "/admin/chatbot"]
+  content_creator: ["/admin/services", "/admin/projects", "/admin/testimonials", "/admin/notifications", "/admin/chatbot"],
+  support_staff: ["/admin/contact-queries", "/admin/notifications", "/admin/chatbot"]
 }
 
 export function proxy(request: NextRequest) {
@@ -34,7 +34,7 @@ export function proxy(request: NextRequest) {
     const allowedRoutes = ROLE_BASED_ROUTES[role]
     const isAllowed = allowedRoutes?.some((route) => pathname.startsWith(route))
     if (!isAllowed) {
-      return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+      return NextResponse.redirect(new URL(`${allowedRoutes[0]}`, request.url))
     }
   }
 
