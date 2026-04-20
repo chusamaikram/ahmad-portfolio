@@ -7,7 +7,7 @@ const ROLE_BASED_ROUTES: Record<string, string[]> = {
   support_staff: ["/admin/dashboard", "/admin/contact-queries", "/admin/notifications", "/admin/chatbot"]
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const token = request.cookies.get('token')?.value
   const role = request.cookies.get('role')?.value
 
@@ -44,5 +44,3 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/admin/:path*'],
 }
-
-

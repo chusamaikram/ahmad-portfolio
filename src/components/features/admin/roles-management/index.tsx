@@ -8,6 +8,8 @@ import type { RoleUser, Role, Status } from "@/src/store/useRolesStore";
 
 const ROLES: Role[] = ["support_staff", "content_creator"];
 
+type UserFormValues = { name: string; email: string; role: Role; status: Status };
+
 const ROLE_COLORS: Record<Role, string> = {
     support_staff: "bg-transparent border border-violet-500 text-violet-400",
     content_creator: "bg-transparent border border-purple-500 text-purple-400",
@@ -36,12 +38,12 @@ export default function RolesManagementView() {
 
     const openEdit = (u: RoleUser) => setEditTarget(u);
 
-    const handleSaveAdd = async (data: typeof form) => {
+    const handleSaveAdd = async (data: UserFormValues) => {
         setSubmitting(true);
         try { await handleAdd(data); setAddModal(false); } catch {} finally { setSubmitting(false); }
     };
 
-    const handleSaveEdit = async (data: typeof form) => {
+    const handleSaveEdit = async (data: UserFormValues) => {
         if (!editTarget) return;
         setSubmitting(true);
         try { await handleUpdate(editTarget.id, data); setEditTarget(null); } catch {} finally { setSubmitting(false); }
@@ -259,8 +261,6 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
         </div>
     );
 }
-
-type UserFormValues = { name: string; email: string; role: Role; status: Status };
 
 function UserForm({ defaultValues, onSave, onCancel, submitLabel }: {
     defaultValues: UserFormValues;

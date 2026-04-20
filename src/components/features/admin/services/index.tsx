@@ -20,7 +20,7 @@ function getGradientCss(value: string) {
   return GRADIENT_OPTIONS.find((o) => o.value === value)?.css ?? value;
 }
 
-type ServiceForm = ServicePayload & { featuresInput: string };
+type ServiceForm = Omit<ServicePayload, "features"> & { featuresInput: string };
 
 const rules = {
   title: { required: "Title is required" },

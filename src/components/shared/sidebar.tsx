@@ -84,15 +84,15 @@ export default function Sidebar() {
 
   const user = useUserStore((s) => s.user);
 
-  const ROLE_ROUTES = {
+  const ROLE_ROUTES: Record<string, string[]> = {
     super_admin: ["/admin/dashboard", "/admin/services", "/admin/projects", "/admin/testimonials", "/admin/contact-queries", "/admin/roles-management", "/admin/notifications", "/admin/chatbot"],
     content_creator: ["/admin/dashboard", "/admin/services", "/admin/projects", "/admin/testimonials", "/admin/notifications", "/admin/chatbot"],
     support_staff: ["/admin/dashboard", "/admin/contact-queries", "/admin/notifications", "/admin/chatbot"]
-  }
+  };
 
   const FilteredNavItems = useMemo(() => {
     return navItems.filter((item) =>
-      ROLE_ROUTES[user?.role]?.includes(item.href)
+      user?.role ? ROLE_ROUTES[user.role]?.includes(item.href) : false
     );
   }, [user?.role]);
 

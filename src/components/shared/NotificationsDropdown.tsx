@@ -7,6 +7,18 @@ import { MarkNotificationAsRead, MarkAllNotificationsAsRead, GetNotifications } 
 import { toast } from "react-toastify";
 import { notificationTypeConfig } from "./notificationTypeConfig";
 
+function timeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d ago`;
+  return new Date(dateStr).toLocaleDateString();
+}
+
 export default function NotificationsDropdown() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -102,7 +114,7 @@ export default function NotificationsDropdown() {
                 <div className="flex-1 min-w-0">
                   <p className={`text-xs font-semibold ${n.is_read ? "text-gray-500 dark:text-gray-400" : "text-gray-900 dark:text-white"}`}>{n.title}</p>
                   <p className="text-xs text-gray-500 truncate mt-0.5">{n.body}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">{new Date(n.created_at).toRelativeString?.() ?? n.created_at}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">{timeAgo(n.created_at)}</p>
                 </div>
                 {!n.is_read && <span className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0 mt-1.5" />}
               </button>
