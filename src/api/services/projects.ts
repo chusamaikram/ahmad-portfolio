@@ -1,0 +1,69 @@
+import api from "../axiosInstance";
+import { API_ENDPOINTS } from "../endpoints";
+import type { Project } from "@/src/store/useProjectStore";
+
+type ProjectPayload = Omit<Project, "id">;
+
+const base64ToFile = (base64: string, filename = "image.jpg"): File => {
+  const [meta, data] = base64.split(",");
+  const mime = meta.match(/:(.*?);/)?.[1] ?? "image/jpeg";
+  const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+  return new File([bytes], filename, { type: mime });
+};
+
+const toApi = (p: ProjectPayload): FormData => {
+  const fd = new FormData();
+  fd.append("title", p.title);
+  fd.append("category", p.category);
+  fd.append("tech_stack", p.tech.join(", "));
+  fd.append("status", p.status);
+  fd.append("year", p.year);
+  fd.append("github_url", p.github);
+  fd.append("live_url", p.live);
+  fd.append("description", p.desc);
+  if (p.image && p.image.startsWith("data:")) {
+    fd.append("image", base64ToFile(p.image));
+  } else if (p.image) {
+    fd.append("image", p.image);
+  }
+  return fd;
+};
+
+const fromApi = (d: any): Project => ({
+  id: d.id,
+  title: d.title,
+  category: d.category,
+  tech: typeof d.tech_stack === "string"
+    ? d.tech_stack.split(",").map((t: string) => t.trim()).filter(Boolean)
+    : d.tech_stack ?? d.tech ?? [],
+  status: d.status,
+  year: String(d.year),
+  github: d.github_url ?? d.github ?? "",
+  live: d.live_url ?? d.live ?? "",
+  desc: d.description ?? d.desc ?? "",
+  image: d.image ?? undefined,
+});
+
+export const fetchProjects = async (): Promise<Project[]> => {
+  const res = await api.get(API_ENDPOINTS.PROJECTS.GET_ALL);
+  const list = Array.isArray(res.data) ? res.data : res.data.results ?? [];
+  return list.map(fromApi);
+};
+
+export const createProject = async (payload: ProjectPayload): Promise<Project> => {
+  const res = await api.post(API_ENDPOINTS.PROJECTS.SEND, toApi(payload), {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return fromApi(res.data);
+};
+
+export const updateProject = async (id: number, payload: ProjectPayload): Promise<Project> => {
+  const res = await api.put(API_ENDPOINTS.PROJECTS.UPDATE(id), toApi(payload), {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return fromApi(res.data);
+};
+
+export const deleteProject = async (id: number): Promise<void> => {
+  await api.delete(API_ENDPOINTS.PROJECTS.DELETE(id));
+};
