@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { Pagination } from "@/src/api/types";
 
 export type ContactQuery = {
   id: number;
@@ -14,7 +15,8 @@ type ContactQueryStore = {
   queries: ContactQuery[];
   search: string;
   filterRead: string;
-  setQueries: (queries: ContactQuery[]) => void;
+  pagination: Pagination | null;
+  setQueries: (queries: ContactQuery[], pagination?: Pagination) => void;
   setSearch: (v: string) => void;
   setFilterRead: (v: string) => void;
   markRead: (id: number) => void;
@@ -27,7 +29,8 @@ export const useContactQueryStore = create<ContactQueryStore>((set) => ({
   queries: [],
   search: "",
   filterRead: "All",
-  setQueries: (queries) => set({ queries: Array.isArray(queries) ? queries : [] }),
+  pagination: null,
+  setQueries: (queries, pagination) => set({ queries: Array.isArray(queries) ? queries : [], pagination: pagination ?? null }),
   setSearch: (v) => set({ search: v }),
   setFilterRead: (v) => set({ filterRead: v }),
   markRead: (id) =>

@@ -1,5 +1,6 @@
 import api, { publicApi } from "../axiosInstance";
 import { API_ENDPOINTS } from "../endpoints";
+import { parsePaginated, type PaginatedResponse } from "../types";
 
 export interface TestimonialPayload {
   name: string;
@@ -35,16 +36,18 @@ const fromApi = (d: any): TestimonialResponse => ({
   status: d.status,
 });
 
-export const fetchTestimonials = async (): Promise<TestimonialResponse[]> => {
-  const res = await api.get(API_ENDPOINTS.TESTIMONIALS.GET_ALL);
-  const list = Array.isArray(res.data) ? res.data : res.data.results ?? [];
-  return list.map(fromApi);
+export const fetchTestimonials = async (page = 1, search = "", status = ""): Promise<PaginatedResponse<TestimonialResponse>> => {
+  const params = new URLSearchParams({ page: String(page) });
+  if (search) params.set("search", search);
+  if (status) params.set("status", status);
+  const res = await api.get(`${API_ENDPOINTS.TESTIMONIALS.GET_ALL}?${params}`);
+  return parsePaginated(res.data, fromApi);
 };
 
 export const fetchPublishedTestimonials = async (): Promise<TestimonialResponse[]> => {
-  const res = await api.get(API_ENDPOINTS.TESTIMONIALS.GET_ALL);
+  const res = await publicApi.get(`${API_ENDPOINTS.TESTIMONIALS.GET_ALL}?status=Published`);
   const list = Array.isArray(res.data) ? res.data : res.data.results ?? [];
-  return list.map(fromApi).filter((t: TestimonialResponse) => t.status === "Published");
+  return list.map(fromApi);
 };
 
 export const createTestimonial = async (payload: TestimonialPayload): Promise<TestimonialResponse> => {

@@ -1,5 +1,6 @@
 import api from "../axiosInstance";
 import { API_ENDPOINTS } from "../endpoints";
+import { parsePaginated, type PaginatedResponse } from "../types";
 import type { RoleUser } from "@/src/store/useRolesStore";
 
 type UserPayload = Omit<RoleUser, "id" | "added">;
@@ -15,10 +16,13 @@ const fromApi = (d: any): RoleUser => ({
     : d.added ?? "",
 });
 
-export const fetchUsers = async (): Promise<RoleUser[]> => {
-  const res = await api.get(API_ENDPOINTS.ROLES.GET_USERS);
-  const list = Array.isArray(res.data) ? res.data : res.data.results ?? [];
-  return list.map(fromApi);
+export const fetchUsers = async (page = 1, search = "", role = "", status = ""): Promise<PaginatedResponse<RoleUser>> => {
+  const params = new URLSearchParams({ page: String(page) });
+  if (search) params.set("search", search);
+  if (role) params.set("role", role);
+  if (status) params.set("status", status);
+  const res = await api.get(`${API_ENDPOINTS.ROLES.GET_USERS}?${params}`);
+  return parsePaginated(res.data, fromApi);
 };
 
 export const createUser = async (payload: UserPayload): Promise<RoleUser> => {

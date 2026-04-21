@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { fetchUsers, createUser, updateUser, deleteUser, toggleUserStatus } from "@/src/api/services/roles";
+import type { Pagination } from "@/src/api/types";
 
 export type Role = "support_staff" | "content_creator" | "super_admin";
 export type Status = "Active" | "Revoked";
@@ -15,17 +16,10 @@ export type RoleUser = {
 
 type RolesStore = {
   users: RoleUser[];
-  search: string;
-  roleFilter: string;
-  statusFilter: string;
   loading: boolean;
   error: string | null;
-
-  setSearch: (v: string) => void;
-  setRoleFilter: (v: string) => void;
-  setStatusFilter: (v: string) => void;
-
-  fetchUsers: () => Promise<void>;
+  pagination: Pagination | null;
+  fetchUsers: (page?: number, search?: string, role?: string, status?: string) => Promise<void>;
   addUser: (p: Omit<RoleUser, "id" | "added">) => Promise<void>;
   updateUser: (id: number, p: Omit<RoleUser, "id" | "added">) => Promise<void>;
   deleteUser: (id: number) => Promise<void>;
@@ -34,21 +28,15 @@ type RolesStore = {
 
 export const useRolesStore = create<RolesStore>((set) => ({
   users: [],
-  search: "",
-  roleFilter: "All Roles",
-  statusFilter: "All Status",
   loading: false,
   error: null,
+  pagination: null,
 
-  setSearch: (v) => set({ search: v }),
-  setRoleFilter: (v) => set({ roleFilter: v }),
-  setStatusFilter: (v) => set({ statusFilter: v }),
-
-  fetchUsers: async () => {
+  fetchUsers: async (page = 1, search = "", role = "", status = "") => {
     set({ loading: true, error: null });
     try {
-      const data = await fetchUsers();
-      set({ users: data });
+      const { results, pagination } = await fetchUsers(page, search, role, status);
+      set({ users: results, pagination });
     } catch {
       set({ error: "Failed to load users" });
     } finally {

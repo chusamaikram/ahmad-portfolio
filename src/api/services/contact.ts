@@ -1,5 +1,6 @@
 import api, { publicApi } from "../axiosInstance";
 import { API_ENDPOINTS } from "../endpoints";
+import { parsePaginated, type PaginatedResponse } from "../types";
 
 export interface ContactPayload {
   name: string;
@@ -23,9 +24,12 @@ export const sendContactMessage = async (payload: ContactPayload) => {
   return response.data;
 };
 
-export const fetchContactQueries = async (): Promise<ContactQueryResponse[]> => {
-  const response = await api.get(API_ENDPOINTS.CONTACT.GET_ALL);
-  return Array.isArray(response.data) ? response.data : response.data.results ?? [];
+export const fetchContactQueries = async (page = 1, search = "", status = ""): Promise<PaginatedResponse<ContactQueryResponse>> => {
+  const params = new URLSearchParams({ page: String(page) });
+  if (search) params.set("search", search);
+  if (status) params.set("status", status);
+  const response = await api.get(`${API_ENDPOINTS.CONTACT.GET_ALL}?${params}`);
+  return parsePaginated(response.data, (d) => d as ContactQueryResponse);
 };
 
 export const markContactQueryRead = async (id: number): Promise<ContactQueryResponse> => {

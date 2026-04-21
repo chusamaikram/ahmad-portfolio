@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import FormField from "@/src/components/shared/FormField";
 import ImageDropZone from "@/src/components/shared/ImageDropZone";
+import PaginationBar from "@/src/components/shared/PaginationBar";
+import TableSkeleton from "@/src/components/shared/TableSkeleton";
 import useProjects from "@/src/api/hooks/useProjects";
 import type { Project } from "@/src/store/useProjectStore";
 import { useUserStore } from "@/src/store/useUserStore";
@@ -89,7 +91,9 @@ function ProjectForm({ defaultValues, onSave, onCancel, submitLabel }: {
 }
 
 export default function AdminProjectsView() {
-  const { projects, filtered, search, filterStatus, loading, error, setSearch, setFilterStatus, handleAdd, handleUpdate, handleDelete } = useProjects();
+  const { projects, search, filterStatus, filterCategory, loading, error, pagination, page, setSearch, setFilterStatus, setFilterCategory, handleAdd, handleUpdate, handleDelete, handlePageChange } = useProjects();
+  // filtering is server-side; projects is already the filtered page
+  const filtered = projects;
   const [modal, setModal] = useState<"add" | "edit" | "view" | "delete" | null>(null);
   const [selected, setSelected] = useState<Project | null>(null);
   const [saving, setSaving] = useState(false);
@@ -144,7 +148,11 @@ export default function AdminProjectsView() {
             className="bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-violet-500 w-56" />
           <select aria-label="filter status" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
             className="bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:border-violet-500">
-            {["All", "Live", "In Progress", "Archived"].map(s => <option key={s}>{s}</option>)}
+            {["All", "live", "in progress", "archived"].map(s => <option key={s}>{s}</option>)}
+          </select>
+          <select aria-label="filter category" value={filterCategory} onChange={e => setFilterCategory(e.target.value)}
+            className="bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:border-violet-500">
+            {["All", "Full-Stack", "Frontend", "Backend"].map(c => <option key={c}>{c}</option>)}
           </select>
         </div>
         <button onClick={openAdd} className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
@@ -167,13 +175,11 @@ export default function AdminProjectsView() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-              {loading && (
-                <tr><td colSpan={6} className="text-center py-12 text-gray-400 dark:text-gray-600">Loading...</td></tr>
-              )}
+              {loading && <TableSkeleton cols={6} />}
               {!loading && filtered.length === 0 && (
                 <tr><td colSpan={6} className="text-center py-12 text-gray-400 dark:text-gray-600">No projects found</td></tr>
               )}
-              {filtered.map(p => (
+              {!loading && filtered.map(p => (
                 <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors group">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
@@ -219,9 +225,7 @@ export default function AdminProjectsView() {
             </tbody>
           </table>
         </div>
-        <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400 dark:text-gray-600">
-          Showing {filtered.length} of {projects.length} projects
-        </div>
+        <PaginationBar pagination={pagination} totalFiltered={filtered.length} onPageChange={handlePageChange} label="projects" />
       </div>
 
       {/* Modals */}

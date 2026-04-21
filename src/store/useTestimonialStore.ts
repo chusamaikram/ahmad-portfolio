@@ -6,6 +6,7 @@ import {
   deleteTestimonial,
   toggleTestimonialStatus,
 } from "@/src/api/services/testimonials";
+import type { Pagination } from "@/src/api/types";
 
 export type Testimonial = {
   id: number;
@@ -19,15 +20,10 @@ export type Testimonial = {
 
 type TestimonialStore = {
   testimonials: Testimonial[];
-  search: string;
-  filterStatus: string;
   loading: boolean;
   error: string | null;
-
-  setSearch: (v: string) => void;
-  setFilterStatus: (v: string) => void;
-
-  fetchTestimonials: () => Promise<void>;
+  pagination: Pagination | null;
+  fetchTestimonials: (page?: number, search?: string, status?: string) => Promise<void>;
   addTestimonial: (t: Omit<Testimonial, "id">) => Promise<void>;
   updateTestimonial: (id: number, t: Omit<Testimonial, "id">) => Promise<void>;
   deleteTestimonial: (id: number) => Promise<void>;
@@ -36,19 +32,15 @@ type TestimonialStore = {
 
 export const useTestimonialStore = create<TestimonialStore>((set, get) => ({
   testimonials: [],
-  search: "",
-  filterStatus: "All",
   loading: false,
   error: null,
+  pagination: null,
 
-  setSearch: (v) => set({ search: v }),
-  setFilterStatus: (v) => set({ filterStatus: v }),
-
-  fetchTestimonials: async () => {
+  fetchTestimonials: async (page = 1, search = "", status = "") => {
     set({ loading: true, error: null });
     try {
-      const data = await fetchTestimonials();
-      set({ testimonials: data });
+      const { results, pagination } = await fetchTestimonials(page, search, status);
+      set({ testimonials: results, pagination });
     } catch {
       set({ error: "Failed to load testimonials" });
     } finally {
@@ -63,9 +55,7 @@ export const useTestimonialStore = create<TestimonialStore>((set, get) => ({
 
   updateTestimonial: async (id, t) => {
     const updated = await updateTestimonial(id, t);
-    set((s) => ({
-      testimonials: s.testimonials.map((x) => (x.id === id ? updated : x)),
-    }));
+    set((s) => ({ testimonials: s.testimonials.map((x) => (x.id === id ? updated : x)) }));
   },
 
   deleteTestimonial: async (id) => {
@@ -77,8 +67,6 @@ export const useTestimonialStore = create<TestimonialStore>((set, get) => ({
     const current = get().testimonials.find((x) => x.id === id)?.status;
     if (!current) return;
     const updated = await toggleTestimonialStatus(id, current);
-    set((s) => ({
-      testimonials: s.testimonials.map((x) => (x.id === id ? updated : x)),
-    }));
+    set((s) => ({ testimonials: s.testimonials.map((x) => (x.id === id ? updated : x)) }));
   },
 }));

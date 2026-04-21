@@ -1,10 +1,6 @@
 import { create } from "zustand";
-import {
-  fetchProjects,
-  createProject,
-  updateProject,
-  deleteProject,
-} from "@/src/api/services/projects";
+import { fetchProjects, createProject, updateProject, deleteProject } from "@/src/api/services/projects";
+import type { Pagination } from "@/src/api/types";
 
 export type Project = {
   id: number;
@@ -21,15 +17,10 @@ export type Project = {
 
 type ProjectStore = {
   projects: Project[];
-  search: string;
-  filterStatus: string;
   loading: boolean;
   error: string | null;
-
-  setSearch: (v: string) => void;
-  setFilterStatus: (v: string) => void;
-
-  fetchProjects: () => Promise<void>;
+  pagination: Pagination | null;
+  fetchProjects: (page?: number, search?: string, status?: string, category?: string) => Promise<void>;
   addProject: (p: Omit<Project, "id">) => Promise<void>;
   updateProject: (id: number, p: Omit<Project, "id">) => Promise<void>;
   deleteProject: (id: number) => Promise<void>;
@@ -37,19 +28,15 @@ type ProjectStore = {
 
 export const useProjectStore = create<ProjectStore>((set) => ({
   projects: [],
-  search: "",
-  filterStatus: "All",
   loading: false,
   error: null,
+  pagination: null,
 
-  setSearch: (v) => set({ search: v }),
-  setFilterStatus: (v) => set({ filterStatus: v }),
-
-  fetchProjects: async () => {
+  fetchProjects: async (page = 1, search = "", status = "", category = "") => {
     set({ loading: true, error: null });
     try {
-      const data = await fetchProjects();
-      set({ projects: data });
+      const { results, pagination } = await fetchProjects(page, search, status, category);
+      set({ projects: results, pagination });
     } catch {
       set({ error: "Failed to load projects" });
     } finally {

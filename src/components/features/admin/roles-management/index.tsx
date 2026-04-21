@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import FormField from "@/src/components/shared/FormField";
+import PaginationBar from "@/src/components/shared/PaginationBar";
+import TableSkeleton from "@/src/components/shared/TableSkeleton";
 import useRoles from "@/src/api/hooks/useRoles";
 import type { RoleUser, Role, Status } from "@/src/store/useRolesStore";
 
@@ -21,11 +23,15 @@ const formatRole = (role: string) =>
 
 export default function RolesManagementView() {
     const {
-        users, filtered, search, roleFilter, statusFilter,
+        users, search, roleFilter, statusFilter,
         loading, error,
+        pagination, page,
         setSearch, setRoleFilter, setStatusFilter,
-        handleAdd, handleUpdate, handleDelete, handleToggleStatus,
+        handleAdd, handleUpdate, handleDelete, handleToggleStatus, handlePageChange,
     } = useRoles();
+
+    // filtering is server-side; users is already the filtered page
+    const filtered = users;
 
     const [addModal, setAddModal] = useState(false);
     const [editTarget, setEditTarget] = useState<RoleUser | null>(null);
@@ -62,14 +68,6 @@ export default function RolesManagementView() {
     };
 
     const selectClass = "bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-violet-500 appearance-none pr-8 cursor-pointer";
-
-    if (loading) return (
-        <div className="space-y-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-14 bg-gray-800 rounded-xl animate-pulse" />
-            ))}
-        </div>
-    );
 
     if (error) return (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
@@ -124,10 +122,11 @@ export default function RolesManagementView() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-800/60">
-                            {filtered.length === 0 && (
+                            {loading && <TableSkeleton cols={6} rows={4} />}
+                            {!loading && filtered.length === 0 && (
                                 <tr><td colSpan={6} className="text-center py-12 text-gray-600">No users found</td></tr>
                             )}
-                            {filtered.map(u => (
+                            {!loading && filtered.map(u => (
                                 <tr key={u.id} className="hover:bg-gray-900/50 transition-colors">
                                     <td className="px-6 py-4 font-semibold text-white">{u.name}</td>
                                     <td className="px-6 py-4 text-gray-400">{u.email}</td>
@@ -161,9 +160,7 @@ export default function RolesManagementView() {
                         </tbody>
                     </table>
                 </div>
-                <div className="px-6 py-3 border-t border-gray-800 text-xs text-gray-600">
-                    Showing {filtered.length} of {users.length} users
-                </div>
+                <PaginationBar pagination={pagination} totalFiltered={filtered.length} onPageChange={handlePageChange} label="users" />
             </div>
 
             {/* Add Modal */}

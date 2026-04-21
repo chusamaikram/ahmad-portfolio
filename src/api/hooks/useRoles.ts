@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { useRolesStore } from "@/src/store/useRolesStore";
 import type { RoleUser } from "@/src/store/useRolesStore";
@@ -6,14 +6,9 @@ import type { RoleUser } from "@/src/store/useRolesStore";
 export default function useRoles() {
   const {
     users,
-    search,
-    roleFilter,
-    statusFilter,
     loading,
     error,
-    setSearch,
-    setRoleFilter,
-    setStatusFilter,
+    pagination,
     fetchUsers,
     addUser,
     updateUser,
@@ -21,18 +16,45 @@ export default function useRoles() {
     toggleUserStatus,
   } = useRolesStore();
 
-  const load = useCallback(async () => {
-    await fetchUsers();
+  const [search, setSearchState] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [roleFilter, setRoleFilterState] = useState("All Roles");
+  const [statusFilter, setStatusFilterState] = useState("All Status");
+  const [page, setPage] = useState(1);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchChange = (value: string) => {
+    setSearchState(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(value);
+      setPage(1);
+    }, 1000);
+  };
+
+  const setRoleFilter = (value: string) => { setRoleFilterState(value); setPage(1); };
+  const setStatusFilter = (value: string) => { setStatusFilterState(value); setPage(1); };
+
+  const load = useCallback(async (p: number, s: string, role: string, status: string) => {
+    await fetchUsers(
+      p,
+      s,
+      role === "All Roles" ? "" : role,
+      status === "All Status" ? "" : status,
+    );
   }, []);
 
   useEffect(() => {
-    load();
-  }, []);
+    load(page, debouncedSearch, roleFilter, statusFilter);
+  }, [page, debouncedSearch, roleFilter, statusFilter]);
+
+  const handlePageChange = (p: number) => setPage(p);
 
   const handleAdd = async (data: Omit<RoleUser, "id" | "added">) => {
     try {
       await addUser(data);
       toast.success("User added.");
+      load(page, debouncedSearch, roleFilter, statusFilter);
     } catch {
       toast.error("Failed to add user.");
       throw new Error();
@@ -53,6 +75,7 @@ export default function useRoles() {
     try {
       await deleteUser(id);
       toast.success("User removed.");
+      load(page, debouncedSearch, roleFilter, statusFilter);
     } catch {
       toast.error("Failed to delete user.");
     }
@@ -62,32 +85,26 @@ export default function useRoles() {
     try {
       await toggleUserStatus(id);
       toast.success("User status updated.");
+      load(page, debouncedSearch, roleFilter, statusFilter);
     } catch {
       toast.error("Failed to update user status.");
     }
   };
 
-  const filtered = users.filter((u) => {
-    const matchSearch =
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase());
-    const matchRole = roleFilter === "All Roles" || u.role === roleFilter;
-    const matchStatus = statusFilter === "All Status" || u.status === statusFilter;
-    return matchSearch && matchRole && matchStatus;
-  });
-
   return {
     users,
-    filtered,
     search,
     roleFilter,
     statusFilter,
     loading,
     error,
-    setSearch,
+    pagination,
+    page,
+    setSearch: handleSearchChange,
     setRoleFilter,
     setStatusFilter,
-    refetch: load,
+    refetch: () => load(page, debouncedSearch, roleFilter, statusFilter),
+    handlePageChange,
     handleAdd,
     handleUpdate,
     handleDelete,

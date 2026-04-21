@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import useServices from "@/src/api/hooks/useServices";
 import FormField from "@/src/components/shared/FormField";
+import PaginationBar from "@/src/components/shared/PaginationBar";
+import TableSkeleton from "@/src/components/shared/TableSkeleton";
 import type { Service, ServicePayload } from "@/src/api/services/services";
 import { useUserStore } from "@/src/store/useUserStore";
 
@@ -95,7 +97,9 @@ function ServiceFormModal({ defaultValues, onSave, onCancel, submitLabel }: {
 }
 
 export default function AdminServicesView() {
-  const { services, filtered, search, setSearch, loading, error, handleAdd, handleUpdate, handleDelete, handleToggleVisible } = useServices();
+  const { services, search, setSearch, loading, error, pagination, page, handlePageChange, handleAdd, handleUpdate, handleDelete, handleToggleVisible } = useServices();
+  // filtering is server-side; services is already the filtered page
+  const filtered = services;
   const [modal, setModal] = useState<"add" | "edit" | "delete" | null>(null);
   const [selected, setSelected] = useState<Service | null>(null);
   const [saving, setSaving] = useState(false);
@@ -166,9 +170,7 @@ export default function AdminServicesView() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-              {loading && (
-                <tr><td colSpan={5} className="text-center py-12 text-gray-400 dark:text-gray-600">Loading...</td></tr>
-              )}
+              {loading && <TableSkeleton cols={5} />}
               {!loading && filtered.length === 0 && (
                 <tr><td colSpan={5} className="text-center py-12 text-gray-400 dark:text-gray-600">No services found</td></tr>
               )}
@@ -234,9 +236,7 @@ export default function AdminServicesView() {
             </tbody>
           </table>
         </div>
-        <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400 dark:text-gray-600">
-          Showing {filtered.length} of {services.length} services
-        </div>
+        <PaginationBar pagination={pagination} totalFiltered={filtered.length} onPageChange={handlePageChange} label="services" />
       </div>
 
       {modal && (

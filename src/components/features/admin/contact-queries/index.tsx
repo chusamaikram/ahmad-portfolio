@@ -4,11 +4,16 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useContactQueryStore, type ContactQuery as Query } from "@/src/store/useContactQueryStore";
 import useContactQueries from "@/src/api/hooks/useContactQueries";
+import PaginationBar from "@/src/components/shared/PaginationBar";
+import TableSkeleton from "@/src/components/shared/TableSkeleton";
 import { useUserStore } from "@/src/store/useUserStore";
 
 export default function AdminContactQueriesView() {
-  const { queries, search, filterRead, setSearch, setFilterRead, toggleRead } = useContactQueryStore();
-  const { loading, error, handleMarkRead, handleMarkAllRead, handleDelete } = useContactQueries();
+  const { queries, toggleRead } = useContactQueryStore();
+  const { loading, error, pagination, page, search, filterRead, setSearch, setFilterRead, handlePageChange, handleMarkRead, handleMarkAllRead, handleDelete } = useContactQueries();
+
+  // server already filters; queries is the current page result
+  const filtered = queries;
   const [selected, setSelected] = useState<Query | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Query | null>(null);
   const searchParams = useSearchParams();
@@ -34,26 +39,12 @@ export default function AdminContactQueriesView() {
     if (searchParams.get("id")) router.replace("/admin/contact-queries");
   };
 
-  const filtered = queries.filter(q => {
-    const matchSearch = q.name.toLowerCase().includes(search.toLowerCase()) || q.email.toLowerCase().includes(search.toLowerCase()) || q.message.toLowerCase().includes(search.toLowerCase());
-    const matchRead = filterRead === "All" || (filterRead === "Unread" && q.status === "unread") || (filterRead === "Read" && q.status === "read");
-    return matchSearch && matchRead;
-  });
-
   const unreadCount = queries.filter(q => q.status === "unread").length;
 
   const openView = (q: Query) => { setSelected(q); handleMarkRead(q.id); };
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-
-  if (loading) return (
-    <div className="space-y-3">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="h-16 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse" />
-      ))}
-    </div>
-  );
 
   if (error) return (
     <div className="flex flex-col items-center justify-center py-20 gap-3">
@@ -105,10 +96,11 @@ export default function AdminContactQueriesView() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-              {filtered.length === 0 && (
+              {loading && <TableSkeleton cols={7} />}
+              {!loading && filtered.length === 0 && (
                 <tr><td colSpan={7} className="text-center py-12 text-gray-400 dark:text-gray-600">No queries found</td></tr>
               )}
-              {filtered.map(q => (
+              {!loading && filtered.map(q => (
                 <tr key={q.id} className={`transition-colors hover:bg-gray-50 dark:hover:bg-gray-900/50 ${q.status === "unread" ? "bg-violet-50 dark:bg-violet-950/10" : ""}`}>
                   <td className="pl-5 py-4">
                     {q.status === "unread" && <span className="w-2 h-2 rounded-full bg-violet-500 block" />}
@@ -148,9 +140,7 @@ export default function AdminContactQueriesView() {
             </tbody>
           </table>
         </div>
-        <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400 dark:text-gray-600">
-          Showing {filtered.length} of {queries.length} queries · {unreadCount} unread
-        </div>
+        <PaginationBar pagination={pagination} totalFiltered={filtered.length} onPageChange={handlePageChange} label="queries" />
       </div>
 
       {/* View modal */}

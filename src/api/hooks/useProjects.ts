@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { useProjectStore } from "@/src/store/useProjectStore";
 import type { Project } from "@/src/store/useProjectStore";
@@ -6,30 +6,54 @@ import type { Project } from "@/src/store/useProjectStore";
 export default function useProjects() {
   const {
     projects,
-    search,
-    filterStatus,
     loading,
     error,
-    setSearch,
-    setFilterStatus,
+    pagination,
     fetchProjects,
     addProject,
     updateProject,
     deleteProject,
   } = useProjectStore();
 
-  const load = useCallback(async () => {
-    await fetchProjects();
+  const [search, setSearchState] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filterStatus, setFilterStatusState] = useState("All");
+  const [filterCategory, setFilterCategoryState] = useState("All");
+  const [page, setPage] = useState(1);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchChange = (value: string) => {
+    setSearchState(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(value);
+      setPage(1);
+    }, 1000);
+  };
+
+  const setFilterStatus = (value: string) => { setFilterStatusState(value); setPage(1); };
+  const setFilterCategory = (value: string) => { setFilterCategoryState(value); setPage(1); };
+
+  const load = useCallback(async (p: number, s: string, status: string, category: string) => {
+    await fetchProjects(
+      p,
+      s,
+      status === "All" ? "" : status,
+      category === "All" ? "" : category,
+    );
   }, []);
 
   useEffect(() => {
-    load();
-  }, []);
+    load(page, debouncedSearch, filterStatus, filterCategory);
+  }, [page, debouncedSearch, filterStatus, filterCategory]);
+
+  const handlePageChange = (p: number) => setPage(p);
 
   const handleAdd = async (data: Omit<Project, "id">) => {
     try {
       await addProject(data);
       toast.success("Project added.");
+      load(page, debouncedSearch, filterStatus, filterCategory);
     } catch {
       toast.error("Failed to add project.");
       throw new Error();
@@ -50,27 +74,26 @@ export default function useProjects() {
     try {
       await deleteProject(id);
       toast.success("Project deleted.");
+      load(page, debouncedSearch, filterStatus, filterCategory);
     } catch {
       toast.error("Failed to delete project.");
     }
   };
 
-  const filtered = projects.filter((p) => {
-    const matchSearch = p.title.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = filterStatus === "All" || p.status === filterStatus;
-    return matchSearch && matchStatus;
-  });
-
   return {
     projects,
-    filtered,
     search,
     filterStatus,
+    filterCategory,
     loading,
     error,
-    setSearch,
+    pagination,
+    page,
+    setSearch: handleSearchChange,
     setFilterStatus,
-    refetch: load,
+    setFilterCategory,
+    refetch: () => load(page, debouncedSearch, filterStatus, filterCategory),
+    handlePageChange,
     handleAdd,
     handleUpdate,
     handleDelete,

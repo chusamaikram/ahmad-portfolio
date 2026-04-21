@@ -1,5 +1,6 @@
 import api from "../axiosInstance";
 import { API_ENDPOINTS } from "../endpoints";
+import { parsePaginated, type PaginatedResponse } from "../types";
 
 export interface Service {
   id: number;
@@ -20,9 +21,11 @@ export interface ServicePayload {
   visible: boolean;
 }
 
-export const GetServices = async (): Promise<Service[]> => {
-  const response = await api.get(API_ENDPOINTS.SERVICES.GET_ALL);
-  return Array.isArray(response.data) ? response.data : (response.data.results ?? []);
+export const GetServices = async (page = 1, search = ""): Promise<PaginatedResponse<Service>> => {
+  const params = new URLSearchParams({ page: String(page) });
+  if (search) params.set("search", search);
+  const response = await api.get(`${API_ENDPOINTS.SERVICES.GET_ALL}?${params}`);
+  return parsePaginated(response.data, (d) => d as Service);
 };
 
 export const CreateService = async (payload: ServicePayload): Promise<Service> => {

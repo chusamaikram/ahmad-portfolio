@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import FormField from "@/src/components/shared/FormField";
+import PaginationBar from "@/src/components/shared/PaginationBar";
+import TableSkeleton from "@/src/components/shared/TableSkeleton";
 import useTestimonials from "@/src/api/hooks/useTestimonials";
 import type { Testimonial } from "@/src/store/useTestimonialStore";
 import { useUserStore } from "@/src/store/useUserStore";
@@ -77,10 +79,13 @@ function TestimonialFormModal({ defaultValues, onSave, onCancel, submitLabel }: 
 
 export default function AdminTestimonialsView() {
   const {
-    testimonials, filtered, search, filterStatus, loading, error,
+    testimonials, search, filterStatus, loading, error,
+    pagination, page,
     setSearch, setFilterStatus,
-    handleAdd, handleUpdate, handleDelete, handleToggleStatus,
+    handleAdd, handleUpdate, handleDelete, handleToggleStatus, handlePageChange,
   } = useTestimonials();
+  // filtering is server-side; testimonials is already the filtered page
+  const filtered = testimonials;
   const [modal, setModal] = useState<"add" | "edit" | "view" | "delete" | null>(null);
   const [selected, setSelected] = useState<Testimonial | null>(null);
   const [saving, setSaving] = useState(false);
@@ -151,13 +156,11 @@ export default function AdminTestimonialsView() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-              {loading && (
-                <tr><td colSpan={5} className="text-center py-12 text-gray-400 dark:text-gray-600">Loading...</td></tr>
-              )}
+              {loading && <TableSkeleton cols={5} />}
               {!loading && filtered.length === 0 && (
                 <tr><td colSpan={5} className="text-center py-12 text-gray-400 dark:text-gray-600">No testimonials found</td></tr>
               )}
-              {filtered.map(t => (
+              {!loading && filtered.map(t => (
                 <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
                   <td className="px-5 py-4">
                     <p className="font-medium text-gray-900 dark:text-white">{t.name}</p>
@@ -193,9 +196,7 @@ export default function AdminTestimonialsView() {
             </tbody>
           </table>
         </div>
-        <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400 dark:text-gray-600">
-          Showing {filtered.length} of {testimonials.length} testimonials
-        </div>
+        <PaginationBar pagination={pagination} totalFiltered={filtered.length} onPageChange={handlePageChange} label="testimonials" />
       </div>
 
       {/* Modals */}

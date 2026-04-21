@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import {
   fetchContactQueries,
@@ -9,16 +9,33 @@ import {
 import { useContactQueryStore } from "@/src/store/useContactQueryStore";
 
 export default function useContactQueries() {
-  const { setQueries, deleteQuery, markRead, markAllRead } = useContactQueryStore();
+  const { setQueries, deleteQuery, markRead, markAllRead, pagination } = useContactQueryStore();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [search, setSearchState] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filterRead, setFilterReadState] = useState("All");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const load = useCallback(async () => {
+  const handleSearchChange = (value: string) => {
+    setSearchState(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(value);
+      setPage(1);
+    }, 1000);
+  };
+
+  const setFilterRead = (value: string) => { setFilterReadState(value); setPage(1); };
+
+  const load = useCallback(async (p: number, s: string, status: string) => {
     setLoading(true);
     setError("");
     try {
-      const data = await fetchContactQueries();
-      setQueries(data);
+      const apiStatus = status === "All" ? "" : status.toLowerCase();
+      const { results, pagination: pg } = await fetchContactQueries(p, s, apiStatus);
+      setQueries(results, pg);
     } catch {
       setError("Failed to load contact queries.");
     } finally {
@@ -26,17 +43,18 @@ export default function useContactQueries() {
     }
   }, []);
 
-  // Always refetch on mount + poll every 30 seconds for live updates
   useEffect(() => {
-    load();
-    const interval = setInterval(load, 30000);
+    load(page, debouncedSearch, filterRead);
+    const interval = setInterval(() => load(page, debouncedSearch, filterRead), 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [page, debouncedSearch, filterRead]);
+
+  const handlePageChange = (p: number) => setPage(p);
 
   const handleMarkRead = async (id: number) => {
     try {
       await markContactQueryRead(id);
-      markRead(id); // sync store optimistically
+      markRead(id);
     } catch {
       toast.error("Failed to mark as read.");
     }
@@ -45,7 +63,7 @@ export default function useContactQueries() {
   const handleMarkAllRead = async () => {
     try {
       await markAllContactQueriesRead();
-      markAllRead(); // sync store
+      markAllRead();
     } catch {
       toast.error("Failed to mark all as read.");
     }
@@ -54,12 +72,26 @@ export default function useContactQueries() {
   const handleDelete = async (id: number) => {
     try {
       await deleteContactQuery(id);
-      deleteQuery(id); // sync store
+      deleteQuery(id);
       toast.success("Query deleted.");
     } catch {
       toast.error("Failed to delete query.");
     }
   };
 
-  return { loading, error, refetch: load, handleMarkRead, handleMarkAllRead, handleDelete };
+  return {
+    loading,
+    error,
+    pagination,
+    page,
+    search,
+    filterRead,
+    setSearch: handleSearchChange,
+    setFilterRead,
+    handlePageChange,
+    refetch: () => load(page, debouncedSearch, filterRead),
+    handleMarkRead,
+    handleMarkAllRead,
+    handleDelete,
+  };
 }

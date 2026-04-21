@@ -8,14 +8,12 @@ const getCookie = (name: string) =>
     .find((row) => row.startsWith(`${name}=`))
     ?.split("=")[1];
 
-// Authenticated instance — for protected admin endpoints
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 5000,
+  timeout: 15000,
   headers: { "Content-Type": "application/json" },
 });
 
-// Attach access token from cookie on every request
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token = getCookie("token");
@@ -26,7 +24,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Auto-refresh access token on 401
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -41,7 +38,6 @@ api.interceptors.response.use(
         original.headers.Authorization = `Bearer ${data.access}`;
         return api(original);
       } catch {
-        // Refresh failed — clear cookies and redirect to login
         document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
         document.cookie = "refresh=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
         window.location.href = "/admin/login";
@@ -51,10 +47,9 @@ api.interceptors.response.use(
   }
 );
 
-// Public instance — for endpoints that don't require authentication
 export const publicApi = axios.create({
   baseURL: BASE_URL,
-  timeout: 5000,
+  timeout: 15000,
   headers: { "Content-Type": "application/json" },
 });
 

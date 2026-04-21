@@ -1,5 +1,6 @@
 import api from "../axiosInstance";
 import { API_ENDPOINTS } from "../endpoints";
+import { parsePaginated, type PaginatedResponse } from "../types";
 import type { Project } from "@/src/store/useProjectStore";
 
 type ProjectPayload = Omit<Project, "id">;
@@ -44,10 +45,13 @@ const fromApi = (d: any): Project => ({
   image: d.image ?? undefined,
 });
 
-export const fetchProjects = async (): Promise<Project[]> => {
-  const res = await api.get(API_ENDPOINTS.PROJECTS.GET_ALL);
-  const list = Array.isArray(res.data) ? res.data : res.data.results ?? [];
-  return list.map(fromApi);
+export const fetchProjects = async (page = 1, search = "", status = "", category = ""): Promise<PaginatedResponse<Project>> => {
+  const params = new URLSearchParams({ page: String(page) });
+  if (search) params.set("search", search);
+  if (status) params.set("status", status);
+  if (category) params.set("category", category);
+  const res = await api.get(`${API_ENDPOINTS.PROJECTS.GET_ALL}?${params}`);
+  return parsePaginated(res.data, fromApi);
 };
 
 export const createProject = async (payload: ProjectPayload): Promise<Project> => {
