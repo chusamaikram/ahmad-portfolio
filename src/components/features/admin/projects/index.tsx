@@ -129,7 +129,7 @@ export default function AdminProjectsView() {
     title: p?.title ?? "",
     category: p?.category ?? "Full-Stack",
     techInput: p?.tech.join(", ") ?? "",
-    status: p?.status ?? "Live",
+    status: p?.status ?? "live",
     year: p?.year ?? new Date().getFullYear().toString(),
     github: p?.github ?? "",
     live: p?.live ?? "",

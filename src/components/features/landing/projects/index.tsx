@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import Link from "next/link";
 import useProjects from "@/src/api/hooks/useProjects";
@@ -106,9 +106,9 @@ function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
 
 export default function ProjectsView() {
 
-  const { projects } = useProjects();
-  const [active, setActive] = useState("All");
-  const filtered = active === "All" ? projects : projects.filter(p => p.category === active);
+  const { projects, filterCategory, setFilterCategory } = useProjects();
+  const active = filterCategory;
+  const filtered = projects;
 
   return (
     <>
@@ -165,7 +165,7 @@ export default function ProjectsView() {
           <Reveal delay={150}>
             <div className="flex flex-wrap justify-center gap-3 mb-14">
               {categories.map((cat) => (
-                <button key={cat} onClick={() => setActive(cat)}
+                <button key={cat} onClick={() => setFilterCategory(cat)}
                   className={`filter-btn px-6 py-2.5 rounded-full text-sm font-semibold border transition-all z-10 ${active === cat ? "active border-transparent text-white" : "border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:text-white"}`}>
                   {cat}
                   <span className="ml-2 text-xs opacity-70">
@@ -185,9 +185,9 @@ export default function ProjectsView() {
 
                     {/* Top row */}
                     <div className="flex items-start justify-between mb-4">
-                      {/* <span className={`text-xs px-3 py-1 rounded-full font-medium ${p.status === "live" || p.status === "archived" ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800" : "bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-800"}`}>
-                        {p.status === "live" ? "● Live" : p.status === "archived" ? "● archived" : "◐ In Progress"}
-                      </span> */}
+                      <span className={`text-xs px-3 py-1 rounded-full font-medium ${p.status === "live" ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800" : p.status === "archived" ? "  bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-400 border-gray-700 " : "bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-800"}`}>
+                        {p.status === "live" ? "● Live" : p.status === "archived" ? "● Archived" : "◐ In Progress"}
+                      </span>
                       <span className="text-xs text-gray-400 dark:text-gray-600">{p.year}</span>
                     </div>
 

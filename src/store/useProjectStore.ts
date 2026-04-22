@@ -7,7 +7,7 @@ export type Project = {
   title: string;
   category: string;
   tech: string[];
-  status: "Live" | "In Progress" | "Archived";
+  status: "live" | "in Progress" | "archived";
   year: string;
   github: string;
   live: string;
